@@ -18,7 +18,6 @@
             overflow: hidden;
         }
 
-        /* The Boxy Cursor */
         .cursor {
             display: inline-block;
             width: 10px;
@@ -34,7 +33,6 @@
             50% { opacity: 0; }
         }
 
-        /* Terminal Style Buttons */
         button {
             background: none;
             border: none;
@@ -44,7 +42,6 @@
             cursor: pointer;
             margin: 0 15px;
             padding: 5px;
-            transition: 0.2s;
         }
 
         button:hover {
@@ -52,15 +49,11 @@
             color: black;
         }
 
-        /* The Crack Effect */
         #crack-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background-color: white;
-            /* Jagged lightning shape */
             clip-path: polygon(45% 0, 50% 20%, 40% 50%, 55% 70%, 48% 100%, 52% 100%, 58% 70%, 45% 50%, 55% 20%, 50% 0);
             display: none;
             pointer-events: none;
@@ -70,6 +63,7 @@
         #terminal-text {
             font-size: 1.5rem;
             min-height: 1.5rem;
+            text-align: center;
         }
     </style>
 </head>
@@ -87,14 +81,51 @@
     </div>
 
     <script>
-        const message = "Are you alone?";
         let i = 0;
+        let currentMessage = "Are you alone?";
         const speed = 100;
+        let audioCtx;
 
-        // Typewriter effect
+        // Function to init Audio (Browsers need a click to start audio)
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTypingSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400 + Math.random() * 200, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        }
+
+        function playGlitchSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
         function typeWriter() {
-            if (i < message.length) {
-                document.getElementById("terminal-text").innerHTML += message.charAt(i);
+            if (i < currentMessage.length) {
+                document.getElementById("terminal-text").innerHTML += currentMessage.charAt(i);
+                playTypingSound();
                 i++;
                 setTimeout(typeWriter, speed);
             } else {
@@ -102,45 +133,34 @@
             }
         }
 
-        // Start when page loads
-        window.onload = typeWriter;
-
-        // 8-bit Damage Sound (Square wave)
-        function playGlitchSound() {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = 'square'; 
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
-
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.2);
-        }
-
         function handleChoice(choice) {
+            initAudio();
             const textElement = document.getElementById('terminal-text');
             const choiceElement = document.getElementById('choices');
             
+            choiceElement.style.visibility = "hidden";
+            textElement.innerHTML = "";
+            i = 0;
+
             if (choice === 'no') {
-                // Show crack and play sound
                 document.getElementById('crack-overlay').style.display = 'block';
                 playGlitchSound();
-                
-                textElement.innerHTML = "LIAR.";
-                choiceElement.style.visibility = "hidden";
+                currentMessage = "LIAR. I can see you.";
+                setTimeout(typeWriter, 500);
             } else {
-                textElement.innerHTML = "...Good.";
-                choiceElement.style.visibility = "hidden";
+                currentMessage = "Good. Then we are alone... together.";
+                setTimeout(typeWriter, 500);
             }
         }
+
+        // Wait for first click to start everything (fixes Safari audio)
+        window.addEventListener('click', function() {
+            if (document.getElementById("terminal-text").innerHTML === "") {
+                initAudio();
+                typeWriter();
+            }
+        }, { once: true });
+
     </script>
 </body>
 </html>
