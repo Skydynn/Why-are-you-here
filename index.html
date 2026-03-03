@@ -16,14 +16,22 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
+            text-transform: uppercase; /* Makes it look like an old computer */
+        }
+
+        #terminal-text {
+            font-size: 1.5rem;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.6;
         }
 
         .cursor {
             display: inline-block;
-            width: 10px;
-            height: 1.2rem;
+            width: 12px;
+            height: 1.4rem;
             background-color: white;
-            margin-left: 5px;
+            margin-left: 8px;
             vertical-align: middle;
             animation: blink 0.8s infinite;
         }
@@ -31,22 +39,6 @@
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
-        }
-
-        button {
-            background: none;
-            border: none;
-            color: white;
-            font-family: monospace;
-            font-size: 1.2rem;
-            cursor: pointer;
-            margin: 0 15px;
-            padding: 5px;
-        }
-
-        button:hover {
-            background-color: white;
-            color: black;
         }
 
         #crack-overlay {
@@ -59,12 +51,6 @@
             pointer-events: none;
             z-index: 100;
         }
-
-        #terminal-text {
-            font-size: 1.5rem;
-            min-height: 1.5rem;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -75,22 +61,15 @@
         <span id="terminal-text"></span><span class="cursor"></span>
     </div>
 
-    <div id="choices" style="visibility: hidden; margin-top: 40px;">
-        <button onclick="handleChoice('yes')">[ YES ]</button>
-        <button onclick="handleChoice('no')">[ NO ]</button>
-    </div>
-
     <script>
         let i = 0;
-        let currentMessage = "Are you alone?";
-        const speed = 100;
+        let currentMessage = "ARE YOU ALONE? (Y/N)";
+        const speed = 80;
         let audioCtx;
+        let canInput = false;
 
-        // Function to init Audio (Browsers need a click to start audio)
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
 
         function playTypingSound() {
@@ -101,10 +80,8 @@
             osc.frequency.setValueAtTime(400 + Math.random() * 200, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.04);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.04);
         }
 
         function playGlitchSound() {
@@ -116,10 +93,8 @@
             osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.3);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
         function typeWriter() {
@@ -129,31 +104,47 @@
                 i++;
                 setTimeout(typeWriter, speed);
             } else {
-                document.getElementById("choices").style.visibility = "visible";
+                canInput = true; // Player can only type once message finishes
             }
         }
 
-        function handleChoice(choice) {
-            initAudio();
-            const textElement = document.getElementById('terminal-text');
-            const choiceElement = document.getElementById('choices');
+        // Listen for keyboard input
+        window.addEventListener('keydown', function(e) {
+            if (!canInput) return;
             
-            choiceElement.style.visibility = "hidden";
+            const key = e.key.toLowerCase();
+            if (key === 'y' || key === 'n') {
+                handleChoice(key);
+            }
+        });
+
+        function handleChoice(choice) {
+            canInput = false;
+            const textElement = document.getElementById('terminal-text');
             textElement.innerHTML = "";
             i = 0;
 
-            if (choice === 'no') {
+            if (choice === 'n') {
                 document.getElementById('crack-overlay').style.display = 'block';
                 playGlitchSound();
-                currentMessage = "LIAR. I can see you.";
-                setTimeout(typeWriter, 500);
+                currentMessage = "LIAR. I SEE YOU.";
+                setTimeout(typeWriter, 800);
             } else {
-                currentMessage = "Good. Then we are alone... together.";
-                setTimeout(typeWriter, 500);
+                // Fetch location for the scare
+                fetch('https://ipapi.co/json/')
+                .then(res => res.json())
+                .then(data => {
+                    currentMessage = `GOOD. IT IS QUIET IN ${data.city.toUpperCase()}. I AM COMING OVER.`;
+                    setTimeout(typeWriter, 500);
+                })
+                .catch(() => {
+                    currentMessage = "GOOD. I AM COMING OVER.";
+                    setTimeout(typeWriter, 500);
+                });
             }
         }
 
-        // Wait for first click to start everything (fixes Safari audio)
+        // Initial Start
         window.addEventListener('click', function() {
             if (document.getElementById("terminal-text").innerHTML === "") {
                 initAudio();
