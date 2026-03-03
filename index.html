@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Why are you here?</title>
     <style>
         body {
@@ -13,7 +15,7 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden; /* Keeps the "void" feel */
+            overflow: hidden;
         }
 
         /* The Boxy Cursor */
@@ -23,6 +25,7 @@
             height: 1.2rem;
             background-color: white;
             margin-left: 5px;
+            vertical-align: middle;
             animation: blink 0.8s infinite;
         }
 
@@ -41,21 +44,44 @@
             cursor: pointer;
             margin: 0 15px;
             padding: 5px;
+            transition: 0.2s;
         }
 
         button:hover {
             background-color: white;
             color: black;
         }
+
+        /* The Crack Effect */
+        #crack-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            /* Jagged lightning shape */
+            clip-path: polygon(45% 0, 50% 20%, 40% 50%, 55% 70%, 48% 100%, 52% 100%, 58% 70%, 45% 50%, 55% 20%, 50% 0);
+            display: none;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #terminal-text {
+            font-size: 1.5rem;
+            min-height: 1.5rem;
+        }
     </style>
 </head>
-
 <body>
+
+    <div id="crack-overlay"></div>
+
     <div id="terminal-wrapper">
         <span id="terminal-text"></span><span class="cursor"></span>
     </div>
 
-    <div id="choices" style="visibility: hidden; margin-top: 30px;">
+    <div id="choices" style="visibility: hidden; margin-top: 40px;">
         <button onclick="handleChoice('yes')">[ YES ]</button>
         <button onclick="handleChoice('no')">[ NO ]</button>
     </div>
@@ -63,28 +89,56 @@
     <script>
         const message = "Are you alone?";
         let i = 0;
-        const speed = 150; // Milliseconds per letter
+        const speed = 100;
 
+        // Typewriter effect
         function typeWriter() {
             if (i < message.length) {
                 document.getElementById("terminal-text").innerHTML += message.charAt(i);
                 i++;
                 setTimeout(typeWriter, speed);
             } else {
-                // Show the buttons when text is finished
                 document.getElementById("choices").style.visibility = "visible";
             }
         }
 
-        // Run the typing when page loads
+        // Start when page loads
         window.onload = typeWriter;
 
+        // 8-bit Damage Sound (Square wave)
+        function playGlitchSound() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'square'; 
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
+
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
         function handleChoice(choice) {
-            // This is where we'll eventually add the "CRACK" and "NOISE" logic
+            const textElement = document.getElementById('terminal-text');
+            const choiceElement = document.getElementById('choices');
+            
             if (choice === 'no') {
-                console.log("Wrong answer.");
+                // Show crack and play sound
+                document.getElementById('crack-overlay').style.display = 'block';
+                playGlitchSound();
+                
+                textElement.innerHTML = "LIAR.";
+                choiceElement.style.visibility = "hidden";
             } else {
-                console.log("Right answer.");
+                textElement.innerHTML = "...Good.";
+                choiceElement.style.visibility = "hidden";
             }
         }
     </script>
