@@ -1,27 +1,92 @@
 <!DOCTYPE html>
 <html>
-
-  <head>
+<head>
     <title>Why are you here?</title>
     <style>
-      /* This is where the "Paint" (CSS) goes later */
-      body {
-        background-color: black;
-        color: white;
-        font-family: monospace;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-      }
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Keeps the "void" feel */
+        }
+
+        /* The Boxy Cursor */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2rem;
+            background-color: white;
+            margin-left: 5px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Terminal Style Buttons */
+        button {
+            background: none;
+            border: none;
+            color: white;
+            font-family: monospace;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 0 15px;
+            padding: 5px;
+        }
+
+        button:hover {
+            background-color: white;
+            color: black;
+        }
     </style>
-  </head>
+</head>
 
-  <body>
-    <div id="terminal-text"></div>
-    <span class="cursor">█</span>
-  </body>
+<body>
+    <div id="terminal-wrapper">
+        <span id="terminal-text"></span><span class="cursor"></span>
+    </div>
 
+    <div id="choices" style="visibility: hidden; margin-top: 30px;">
+        <button onclick="handleChoice('yes')">[ YES ]</button>
+        <button onclick="handleChoice('no')">[ NO ]</button>
+    </div>
+
+    <script>
+        const message = "Are you alone?";
+        let i = 0;
+        const speed = 150; // Milliseconds per letter
+
+        function typeWriter() {
+            if (i < message.length) {
+                document.getElementById("terminal-text").innerHTML += message.charAt(i);
+                i++;
+                setTimeout(typeWriter, speed);
+            } else {
+                // Show the buttons when text is finished
+                document.getElementById("choices").style.visibility = "visible";
+            }
+        }
+
+        // Run the typing when page loads
+        window.onload = typeWriter;
+
+        function handleChoice(choice) {
+            // This is where we'll eventually add the "CRACK" and "NOISE" logic
+            if (choice === 'no') {
+                console.log("Wrong answer.");
+            } else {
+                console.log("Right answer.");
+            }
+        }
+    </script>
+</body>
 </html>
